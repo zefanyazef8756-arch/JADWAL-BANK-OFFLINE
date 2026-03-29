@@ -24,7 +24,12 @@ h1 {
   letter-spacing: 2px;
   text-shadow: 0 0 15px cyan;
 }
-
+.card img {
+  width: 60px;
+  height: auto;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 8px rgba(0,255,255,0.6));
+}
 #clock {
   text-align: center;
   font-size: 18px;
@@ -226,7 +231,15 @@ const services = [
 ];
 
 let lastStatus = {};
-
+const logos = {
+  BCA: "https://cdn.areabermain.club/assets/cdn/az7/2026/02/06/20260206/f9ae7f05c1d3b1f2ad064349fb46ddc6/bca.png",
+  BRI: "https://cdn.areabermain.club/assets/cdn/az7/2026/02/06/20260206/35e5febf606ff860a1edac03dc7f8ff5/bri.png",
+  MANDIRI: "https://cdn.areabermain.club/assets/cdn/az7/2026/02/06/20260206/d2a434147adb9189ea9e659fa294c02c/mandiri.png",
+  BNI: "https://cdn.areabermain.club/assets/cdn/az7/2026/02/06/20260206/3502f3c0b5e6b26e6aab815aa6dfb8ba/bni.png",
+  BSI: "https://cdn.areabermain.club/assets/cdn/az7/2026/02/06/20260206/04f3b2c0254619882e93ff8728e299de/bsi.png",
+  QRIS: "https://cdn.areabermain.club/assets/cdn/az7/2026/02/06/20260206/0a2bfa43b79c640d3981060e941289d9/qris.png",
+  DANA: "https://cdn.areabermain.club/assets/cdn/az7/2026/02/06/20260206/b4e4d78f6fc47b85d76251cbd5c62820/dana.png"
+};
 // ================= TIME =================
 function updateClock() {
   document.getElementById("clock").innerText = new Date().toLocaleString("id-ID");
@@ -308,12 +321,15 @@ function render(){
     const div=document.createElement("div");
     div.className = "card " + status.toLowerCase();
 
-    div.innerHTML=`
-      <h3>${s.name}</h3>
-      <div class="${status.toLowerCase()}">${status}</div>
-      <div class="countdown">${getCountdown(s.end)}</div>
-      <small>${s.start} - ${s.end}</small>
-    `;
+    div.innerHTML = `
+  <div style="text-align:center">
+    <img src="${logos[s.name]}" alt="${s.name}">
+    <h3>${s.name}</h3>
+  </div>
+  <div class="${status.toLowerCase()}">${status}</div>
+  <div class="countdown">${getCountdown(s.end)}</div>
+  <small>${s.start} - ${s.end}</small>
+`;
 
     c.appendChild(div);
   });
