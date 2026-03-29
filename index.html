@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Monitor PRO</title>
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  color: white;
+  background: 
+    linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.9)),
+    url('https://i.pinimg.com/736x/ac/47/7e/ac477e7923915d16545a37be76a3ef2f.jpg');
+  background-size: cover;
+  backdrop-filter: blur(5px);
+}
+
+/* HEADER */
+h1 {
+  text-align: center;
+  margin: 20px 0;
+  font-size: 28px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 15px cyan;
+}
+
+#clock {
+  text-align: center;
+  font-size: 18px;
+  opacity: 0.8;
+}
+
+/* CONTROL */
+.control button {
+  background: rgba(0,255,255,0.1);
+  border: 1px solid cyan;
+  color: cyan;
+  padding: 8px 15px;
+  margin: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.control button:hover {
+  background: cyan;
+  color: black;
+}
+
+/* GRID */
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+  gap: 15px;
+  padding: 20px;
+}
+
+/* CARD GLASS */
+.card {
+  padding: 15px;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+/* HOVER EFFECT */
+.card:hover {
+  transform: translateY(-5px) scale(1.02);
+}
+
+/* GLOW ANIMATION */
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 5px; }
+  50% { box-shadow: 0 0 20px; }
+  100% { box-shadow: 0 0 5px; }
+}
+
+/* STATUS */
+.card.online {
+  border-color: #22c55e;
+  animation: glowPulse 2s infinite;
+}
+
+.card.gangguan {
+  border-color: #facc15;
+  animation: glowPulse 1.5s infinite;
+}
+
+.card.offline {
+  border-color: #ef4444;
+  animation: glowPulse 1s infinite;
+}
+
+/* TEXT */
+.online { color: #22c55e; font-weight: bold; }
+.gangguan { color: #facc15; font-weight: bold; }
+.offline { color: #ef4444; font-weight: bold; }
+
+/* COUNTDOWN */
+.countdown {
+  font-size: 22px;
+  margin-top: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* PROGRESS BAR */
+.progress {
+  height: 5px;
+  margin-top: 10px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: cyan;
+  width: 0%;
+  transition: 1s linear;
+}
+</style>
+</head>
+
+<body>
+
+<h1>⚡ MONITOR BANK PRO</h1>
+<div id="clock"></div>
+
+<div class="control">
+  <button onclick="initAudio()">🔊 Aktifkan</button>
+  <button onclick="toggleMute()" id="muteBtn">🔊 Mute</button><br><br>
+  Volume: <span id="volText">100%</span><br>
+  <input type="range" min="0" max="100" value="100" onchange="setVolume(this.value)">
+</div>
+
+<div class="container" id="container"></div>
+
+<script>
+// ================= AUDIO =================
+let audioUnlocked = false;
+let isMuted = false;
+let volumeLevel = localStorage.getItem("volumeLevel") 
+  ? parseFloat(localStorage.getItem("volumeLevel")) 
+  : 1;
+
+let audioCtx;
+
+function initAudio() {
+  audioUnlocked = true;
+
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+
+  speechSynthesis.getVoices();
+
+  playBeep();
+  setTimeout(() => speak("Monitor aktif"), 500);
+}
+
+function speak(text) {
+  if (!audioUnlocked || isMuted) return;
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.lang = "id-ID";
+  msg.volume = volumeLevel;
+  speechSynthesis.speak(msg);
+}
+
+function playBeep() {
+  if (!audioUnlocked || isMuted) return;
+
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = "sine";
+  osc.frequency.value = 1000;
+  gain.gain.value = volumeLevel;
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.3);
+}
+
+function playAlertStrong() {
+  let i=0;
+  const intv = setInterval(()=>{
+    playBeep();
+    i++;
+    if(i>=3) clearInterval(intv);
+  },400);
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  document.getElementById("muteBtn").innerText = isMuted ? "🔇 Unmute" : "🔊 Mute";
+}
+
+function setVolume(val) {
+  volumeLevel = val/100;
+  document.getElementById("volText").innerText = val+"%";
+  localStorage.setItem("volumeLevel", volumeLevel);
+}
+
+// ================= DATA =================
+const services = [
+  { name: "BCA", start: "21:54", end: "00:05", type: "offline" },
+  { name: "BSI", start: "21:54", end: "00:05", type: "offline" },
+  { name: "MANDIRI", start: "22:55", end: "02:55", type: "offline" },
+  { name: "BNI", start: "22:58", end: "02:30", type: "gangguan" },
+  { name: "BRI", start: "23:15", end: "04:30", type: "gangguan" },
+  { name: "DANA", start: "23:29", end: "00:00", type: "gangguan" },
+  { name: "QRIS", start: "23:47", end: "23:59", type: "gangguan" },
+];
+
+let lastStatus = {};
+
+// ================= TIME =================
+function updateClock() {
+  document.getElementById("clock").innerText = new Date().toLocaleString("id-ID");
+}
+
+function toMinutes(t){
+  const [h,m]=t.split(":");
+  return h*60 + +m;
+}
+
+function getStatus(s){
+  const now=new Date();
+  const cur=now.getHours()*60+now.getMinutes();
+  const start=toMinutes(s.start);
+  const end=toMinutes(s.end);
+
+  if(start<=end){
+    return (cur>=start && cur<=end)
+      ? (s.type==="offline"?"OFFLINE":"GANGGUAN")
+      : "ONLINE";
+  }else{
+    return (cur>=start || cur<=end)
+      ? (s.type==="offline"?"OFFLINE":"GANGGUAN")
+      : "ONLINE";
+  }
+}
+
+function getCountdown(end){
+  const now=new Date();
+  let [h,m]=end.split(":");
+  let target=new Date();
+  target.setHours(h,m,0);
+
+  if(target<now) target.setDate(target.getDate()+1);
+
+  let diff=target-now;
+  let h2=Math.floor(diff/3600000);
+  let m2=Math.floor((diff%3600000)/60000);
+  let s2=Math.floor((diff%60000)/1000);
+
+  return `${h2.toString().padStart(2,"0")}:${m2.toString().padStart(2,"0")}:${s2.toString().padStart(2,"0")}`;
+}
+
+// ================= VOICE =================
+function handleVoice(name,status){
+  const prev=lastStatus[name];
+  if(!prev){
+    lastStatus[name]=status;
+    return;
+  }
+
+  if(prev!==status){
+    if(status==="OFFLINE"){
+      playAlertStrong();
+      speak(`${name} sedang offline`);
+    }
+    else if(status==="GANGGUAN"){
+      playBeep();
+      speak(`${name} sedang gangguan`);
+    }
+    else if(status==="ONLINE"){
+      playBeep();
+      speak(`${name} sudah normal kembali`);
+    }
+
+    lastStatus[name]=status;
+  }
+}
+
+// ================= RENDER =================
+function render(){
+  const c=document.getElementById("container");
+  c.innerHTML="";
+
+  services.forEach(s=>{
+    const status=getStatus(s);
+    handleVoice(s.name,status);
+
+    const div=document.createElement("div");
+    div.className = "card " + status.toLowerCase();
+
+    div.innerHTML=`
+      <h3>${s.name}</h3>
+      <div class="${status.toLowerCase()}">${status}</div>
+      <div class="countdown">${getCountdown(s.end)}</div>
+      <small>${s.start} - ${s.end}</small>
+    `;
+
+    c.appendChild(div);
+  });
+}
+
+setInterval(()=>{
+  updateClock();
+  render();
+},1000);
+</script>
+
+</body>
+</html>
